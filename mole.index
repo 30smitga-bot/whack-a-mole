@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>3D Whack-a-Mole (5 Moles)</title>
+    <script src="https://aframe.io/releases/1.8.0/aframe.min.js"></script>
+    <script>
+      AFRAME.registerComponent('whackable', {
+        init: function () {
+          var el = this.el;
+          
+          el.addEventListener('click', function () {
+            if (el.getAttribute('data-whacked') === 'true') return;
+
+            var currentPos = el.getAttribute('position');
+            
+            if (currentPos.y > -0.2) {
+              el.setAttribute('data-whacked', 'true');
+
+              var scoreEl = document.querySelector('#score-text');
+              var currentScore = parseInt(scoreEl.getAttribute('value').replace('Score: ', '')) || 0;
+              currentScore += 1;
+              scoreEl.setAttribute('value', 'Score: ' + currentScore);
+
+              el.removeAttribute('animation');
+              el.setAttribute('position', { x: currentPos.x, y: -0.8, z: currentPos.z });
+
+              setTimeout(function () {
+                var animSpeed = el.getAttribute('data-speed') || '2400';
+                
+                el.setAttribute('animation', {
+                  property: 'position.y',
+                  from: -0.8,
+                  to: 0.5,
+                  dur: animSpeed,
+                  dir: 'alternate',
+                  loop: true,
+                  easing: 'easeInOutQuad'
+                });
+                
+                el.setAttribute('data-whacked', 'false');
+              }, 5000);
+            }
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene>
+
+      <a-camera position="0 2 1.5">
+        <a-cursor color="#FFD700" fuse="false"></a-cursor>
+      </a-camera>
+
+      <a-sky color="#87CEEB"></a-sky>
+      <a-plane position="0 0 -3" rotation="-90 0 0" width="14" height="14" color="#4CAF50" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKIDpY5Tt1mO7ASVusaxqbEzntm7Ik8x3lSn3UICsja_g9ZPAAaUb_HMI&s=10"></a-plane>
+      
+      <a-text 
+        id="score-text" 
+        value="Score: 0" 
+        position="0 3.8 -4" 
+        align="center" 
+        color="#FFFFFF" 
+        width="9">
+      </a-text>
+
+      
+      <a-entity position="-3 0 -3.5">
+        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
+        <a-sphere 
+          whackable data-whacked="false" data-speed="1400"
+          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
+          radius="0.5" position="0 -0.8 0"
+          animation="property: position.y; from: -0.8; to: 0.5; dur: 1400; dir: alternate; loop: true; easing: easeInOutQuad">
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
+        </a-sphere>
+      </a-entity>
+
+     
+      <a-entity position="-1.5 0 3">
+        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
+        <a-sphere 
+          whackable data-whacked="false" data-speed="900"
+          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
+          radius="0.5" position="0 -0.8 0"
+          animation="property: position.y; from: -0.8; to: 0.5; dur: 900; dir: alternate; loop: true; easing: easeInOutQuad">
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
+        </a-sphere>
+      </a-entity>
+
+      
+      <a-entity position="0 0 -4.5">
+        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
+        <a-sphere 
+          whackable data-whacked="false" data-speed="700"
+          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
+          radius="0.5" position="0 -0.8 0"
+          animation="property: position.y; from: -0.8; to: 0.5; dur: 700; dir: alternate; loop: true; easing: easeInOutQuad">
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
+              </a-sphere>
+        </a-entity>
+
+      
+      <a-entity position="1.5 0 3">
+        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
+        <a-sphere 
+          whackable data-whacked="false" data-speed="1100"
+          color="#795548"  src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
+          radius="0.5" position="0 -0.8 0"
+          animation="property: position.y; from: -0.8; to: 0.5; dur: 1100; dir: alternate; loop: true; easing: easeInOutQuad">
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
+        </a-sphere>
+      </a-entity>
+
+     
+      <a-entity position="3 0 -3.5">
+        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
+        <a-sphere 
+          whackable data-whacked="false" data-speed="1600"
+          color="#795548"  src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh"
+          radius="0.5" position="0 -0.8 0"
+          animation="property: position.y; from: -0.8; to: 0.5; dur: 1600; dir: alternate; loop: true; easing: easeInOutQuad">
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
+        </a-sphere>
+      </a-entity>
+
+      
+      <a-light type="ambient" color="#AAA"></a-light>
+      <a-light type="directional" intensity="0.5" position="-1 4 2"></a-light>
+    </a-scene>
+  </body>
+</html>
