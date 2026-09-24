@@ -64,67 +64,71 @@
         width="9">
       </a-text>
 
-      
+      <!-- Mole 1 -->
       <a-entity position="-3 0 -3.5">
         <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-sphere 
+        <a-cylinder 
           whackable data-whacked="false" data-speed="1400"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
           color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" position="0 -0.8 0"
+          radius="0.5" height="1" position="0 -0.8 0"
           animation="property: position.y; from: -0.8; to: 0.5; dur: 1400; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
-        </a-sphere>
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
+        </a-cylinder>
       </a-entity>
 
-     
+      <!-- Mole 2 -->
       <a-entity position="-1.5 0 3">
         <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-sphere 
+        <a-cylinder 
           whackable data-whacked="false" data-speed="900"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
           color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" position="0 -0.8 0"
+          radius="0.5" height="1" position="0 -0.8 0"
           animation="property: position.y; from: -0.8; to: 0.5; dur: 900; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
-        </a-sphere>
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
+        </a-cylinder>
       </a-entity>
 
-      
+      <!-- Mole 3 -->
       <a-entity position="0 0 -4.5">
         <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-sphere 
+        <a-cylinder 
           whackable data-whacked="false" data-speed="700"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
           color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" position="0 -0.8 0"
+          radius="0.5" height="1" position="0 -0.8 0"
           animation="property: position.y; from: -0.8; to: 0.5; dur: 700; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
-              </a-sphere>
-        </a-entity>
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
+        </a-cylinder>
+      </a-entity>
 
-      
+      <!-- Mole 4 -->
       <a-entity position="1.5 0 3">
         <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-sphere 
+        <a-cylinder 
           whackable data-whacked="false" data-speed="1100"
-          color="#795548"  src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" position="0 -0.8 0"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
+          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
+          radius="0.5" height="1" position="0 -0.8 0"
           animation="property: position.y; from: -0.8; to: 0.5; dur: 1100; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
-        </a-sphere>
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
+        </a-cylinder>
       </a-entity>
 
-     
+      <!-- Mole 5 -->
       <a-entity position="3 0 -3.5">
         <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-sphere 
+        <a-cylinder 
           whackable data-whacked="false" data-speed="1600"
-          color="#795548"  src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh"
-          radius="0.5" position="0 -0.8 0"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
+          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh"
+          radius="0.5" height="1" position="0 -0.8 0"
           animation="property: position.y; from: -0.8; to: 0.5; dur: 1600; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.1 0.45"></a-sphere>
-        </a-sphere>
+          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
+        </a-cylinder>
       </a-entity>
 
-      
       <a-light type="ambient" color="#AAA"></a-light>
       <a-light type="directional" intensity="0.5" position="-1 4 2"></a-light>
     </a-scene>
