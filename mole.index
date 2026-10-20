@@ -1,136 +1,689 @@
+
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>3D Whack-a-Mole (5 Moles)</title>
-    <script src="https://aframe.io/releases/1.8.0/aframe.min.js"></script>
-    <script>
-      AFRAME.registerComponent('whackable', {
-        init: function () {
-          var el = this.el;
-          
-          el.addEventListener('click', function () {
-            if (el.getAttribute('data-whacked') === 'true') return;
+<head>
+<title>3D Pirate Adventure</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #03172b;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
 
-            var currentPos = el.getAttribute('position');
-            
-            if (currentPos.y > -0.2) {
-              el.setAttribute('data-whacked', 'true');
+    #hud {
+        position: fixed;
+        z-index: 5;
+        top: 12px;
+        width: 100%;
+        text-align: center;
+        pointer-events: none;
+        text-shadow: 2px 2px 4px black;
+    }
 
-              var scoreEl = document.querySelector('#score-text');
-              var currentScore = parseInt(scoreEl.getAttribute('value').replace('Score: ', '')) || 0;
-              currentScore += 1;
-              scoreEl.setAttribute('value', 'Score: ' + currentScore);
+    h1 {
+        color: gold;
+        margin: 0 0 10px;
+    }
 
-              el.removeAttribute('animation');
-              el.setAttribute('position', { x: currentPos.x, y: -0.8, z: currentPos.z });
+    #stats {
+        font-size: 20px;
+    }
 
-              setTimeout(function () {
-                var animSpeed = el.getAttribute('data-speed') || '2400';
-                
-                el.setAttribute('animation', {
-                  property: 'position.y',
-                  from: -0.8,
-                  to: 0.5,
-                  dur: animSpeed,
-                  dir: 'alternate',
-                  loop: true,
-                  easing: 'easeInOutQuad'
-                });
-                
-                el.setAttribute('data-whacked', 'false');
-              }, 5000);
-            }
-          });
+    #crosshair {
+        position: fixed;
+        z-index: 5;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 30px;
+        color: white;
+        pointer-events: none;
+    }
+
+    #panel {
+        position: fixed;
+        z-index: 6;
+        left: 50%;
+        top: 65%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: #102b40dd;
+        padding: 20px;
+        border: 2px solid gold;
+        border-radius: 12px;
+        width: 280px;
+    }
+
+    button {
+        padding: 12px 22px;
+        background: gold;
+        color: #271800;
+        font-size: 18px;
+        font-weight: bold;
+        border: 0;
+        border-radius: 7px;
+        cursor: pointer;
+    }
+
+    #help {
+        position: fixed;
+        z-index: 5;
+        bottom: 12px;
+        width: 100%;
+        text-align: center;
+        color: white;
+        text-shadow: 1px 1px 4px black;
+        pointer-events: none;
+    }
+</style>
+</head>
+<body>
+
+<div id="hud">
+    <h1>🏴‍☠️ 3D PIRATE ADVENTURE</h1>
+    <div id="stats">
+        💰 Gold: <span id="score">0</span>
+        &nbsp; | &nbsp;
+        ❤️ Hull: <span id="health">3</span>
+    </div>
+</div>
+
+<div id="crosshair">+</div>
+
+<div id="panel">
+    <h2 id="message">PIRATE ADVENTURE</h2>
+    <p id="description">
+        Sail the ocean, sink enemy ships, and collect treasure!
+    </p>
+    <button id="start">START GAME</button>
+</div>
+
+<div id="help">
+    WASD = Sail | Mouse = Look | Click = Fire Cannon | Collect chests!
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+// ========================
+// 1. WORLD AND CAMERA
+// ========================
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x75d8f2);
+scene.fog = new THREE.Fog(0x75d8f2, 35, 130);
+
+const camera = new THREE.PerspectiveCamera(
+    75, window.innerWidth / window.innerHeight, 0.1, 500
+);
+
+const renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xc8f0ff, 0x38512e, 2));
+
+const sunlight = new THREE.DirectionalLight(0xffffff, 3);
+sunlight.position.set(-15, 25, 10);
+sunlight.castShadow = true;
+scene.add(sunlight);
+
+// ========================
+// 2. OCEAN
+// ========================
+
+const oceanMaterial = new THREE.MeshStandardMaterial({
+    color: 0x087fae,
+    roughness: 0.35,
+    metalness: 0.1
+});
+
+const ocean = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 500, 80, 80),
+    oceanMaterial
+);
+ocean.rotation.x = -Math.PI / 2;
+ocean.position.y = -0.8;
+scene.add(ocean);
+
+// Ocean grid lines
+const grid = new THREE.GridHelper(200, 60, 0x44d9ef, 0x1687a5);
+grid.position.y = -0.77;
+scene.add(grid);
+
+// ========================
+// 3. SHIP BUILDING FUNCTION
+// ========================
+
+function makeShip(color, pirate) {
+    const group = new THREE.Group();
+
+    // Wooden hull
+    const hull = new THREE.Mesh(
+        new THREE.BoxGeometry(2.8, 0.65, 4.4),
+        new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: 0.8
+        })
+    );
+    hull.position.y = 0;
+    group.add(hull);
+
+    // Pointed bow
+    const bow = new THREE.Mesh(
+        new THREE.ConeGeometry(1.0, 1.8, 4),
+        new THREE.MeshStandardMaterial({color: color})
+    );
+    bow.rotation.x = -Math.PI / 2;
+    bow.rotation.z = Math.PI / 4;
+    bow.position.set(0, -0.05, -2.5);
+    group.add(bow);
+
+    // Deck
+    const deck = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 0.15, 3.6),
+        new THREE.MeshStandardMaterial({color: 0xd7aa62})
+    );
+    deck.position.y = 0.4;
+    group.add(deck);
+
+    // Mast
+    const mast = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.13, 3.7, 8),
+        new THREE.MeshStandardMaterial({color: 0x59371d})
+    );
+    mast.position.set(0, 2.1, 0);
+    group.add(mast);
+
+    // Sail
+    const sail = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.8, 2.1),
+        new THREE.MeshStandardMaterial({
+            color: pirate ? 0x171721 : 0xf5e8c8,
+            side: THREE.DoubleSide
+        })
+    );
+    sail.position.set(0, 2.3, 0.08);
+    group.add(sail);
+
+    // Skull flag with different colors
+    if (pirate) {
+        const flagColors = [
+            0xff3030, 0x35ff70, 0x00ddff,
+            0xc56bff, 0xffa500, 0xffffff
+        ];
+
+        const flagColor =
+            flagColors[Math.floor(Math.random() * flagColors.length)];
+
+        const flag = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.85, 0.65),
+            new THREE.MeshStandardMaterial({
+                color: flagColor,
+                side: THREE.DoubleSide,
+                emissive: flagColor,
+                emissiveIntensity: 0.25
+            })
+        );
+
+        flag.position.set(0.45, 3.35, 0.12);
+        group.add(flag);
+
+        // Skull icon represented by a white skull-shaped sphere
+        const skull = new THREE.Mesh(
+            new THREE.SphereGeometry(0.17, 12, 12),
+            new THREE.MeshStandardMaterial({color: 0xffffff})
+        );
+        skull.position.set(0.45, 3.38, 0.18);
+        group.add(skull);
+
+        const eyeMaterial = new THREE.MeshBasicMaterial({color: 0x111111});
+
+        for (let side of [-1, 1]) {
+            const eye = new THREE.Mesh(
+                new THREE.SphereGeometry(0.035, 8, 8),
+                eyeMaterial
+            );
+            eye.position.set(
+                0.45 + side * 0.06, 3.4, 0.32
+            );
+            group.add(eye);
         }
-      });
-    </script>
-  </head>
-  <body>
-    <a-scene>
+    }
 
-      <a-camera position="0 2 1.5">
-        <a-cursor color="#FFD700" fuse="false"></a-cursor>
-      </a-camera>
+    // Cannon barrels
+    const cannonMaterial = new THREE.MeshStandardMaterial({
+        color: 0x292d32,
+        metalness: 0.8,
+        roughness: 0.3
+    });
 
-      <a-sky color="#87CEEB"></a-sky>
-      <a-plane position="0 0 -3" rotation="-90 0 0" width="14" height="14" color="#4CAF50" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKIDpY5Tt1mO7ASVusaxqbEzntm7Ik8x3lSn3UICsja_g9ZPAAaUb_HMI&s=10"></a-plane>
-      
-      <a-text 
-        id="score-text" 
-        value="Score: 0" 
-        position="0 3.8 -4" 
-        align="center" 
-        color="#FFFFFF" 
-        width="9">
-      </a-text>
+    for (let side of [-1, 1]) {
+        for (let z of [-1.1, 0, 1.1]) {
+            const cannon = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.16, 0.4, 10),
+                cannonMaterial
+            );
+            cannon.rotation.z = Math.PI / 2;
+            cannon.position.set(side * 1.45, 0.25, z);
+            group.add(cannon);
+        }
+    }
 
-      <!-- Mole 1 -->
-      <a-entity position="-3 0 -3.5">
-        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-cylinder 
-          whackable data-whacked="false" data-speed="1400"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
-          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" height="1" position="0 -0.8 0"
-          animation="property: position.y; from: -0.8; to: 0.5; dur: 1400; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
-        </a-cylinder>
-      </a-entity>
+    return group;
+}
 
-      <!-- Mole 2 -->
-      <a-entity position="-1.5 0 3">
-        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-cylinder 
-          whackable data-whacked="false" data-speed="900"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
-          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" height="1" position="0 -0.8 0"
-          animation="property: position.y; from: -0.8; to: 0.5; dur: 900; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
-        </a-cylinder>
-      </a-entity>
+// ========================
+// 4. PLAYER SHIP
+// ========================
 
-      <!-- Mole 3 -->
-      <a-entity position="0 0 -4.5">
-        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-cylinder 
-          whackable data-whacked="false" data-speed="700"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
-          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" height="1" position="0 -0.8 0"
-          animation="property: position.y; from: -0.8; to: 0.5; dur: 700; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
-        </a-cylinder>
-      </a-entity>
+const player = makeShip(0x70401e, false);
+player.position.set(0, 0, 4);
+scene.add(player);
 
-      <!-- Mole 4 -->
-      <a-entity position="1.5 0 3">
-        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-cylinder 
-          whackable data-whacked="false" data-speed="1100"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
-          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh" 
-          radius="0.5" height="1" position="0 -0.8 0"
-          animation="property: position.y; from: -0.8; to: 0.5; dur: 1100; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
-        </a-cylinder>
-      </a-entity>
+// ========================
+// 5. ISLANDS
+// ========================
 
-      <!-- Mole 5 -->
-      <a-entity position="3 0 -3.5">
-        <a-cylinder color="#3E2723" radius="0.7" height="0.05" position="0 0.01 0"></a-cylinder>
-        <a-cylinder 
-          whackable data-whacked="false" data-speed="1600"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK67rkopiV0Ey4csPdaO3pQKsdGEdryHNxSRY6QvNBQLEjzV6d5wLiy5Q&s=10"
-          color="#795548" src="https://www.humaneworld.org/sites/default/files/styles/responsive_3_2_500w/public/2021-05/HBY_Mole-in-hole-Hero.jpg.webp?h=474d6186&itok=3weMARyh"
-          radius="0.5" height="1" position="0 -0.8 0"
-          animation="property: position.y; from: -0.8; to: 0.5; dur: 1600; dir: alternate; loop: true; easing: easeInOutQuad">
-          <a-sphere color="#FFCDD2" radius="0.1" position="0 0.3 0.5"></a-sphere>
-        </a-cylinder>
-      </a-entity>
+function makeIsland(x, z, size) {
+    const island = new THREE.Group();
 
-      <a-light type="ambient" color="#AAA"></a-light>
-      <a-light type="directional" intensity="0.5" position="-1 4 2"></a-light>
-    </a-scene>
-  </body>
+    const sand = new THREE.Mesh(
+        new THREE.CylinderGeometry(size, size * 1.3, 1.1, 12),
+        new THREE.MeshStandardMaterial({color: 0xe6cf86})
+    );
+    sand.position.y = -0.3;
+    island.add(sand);
+
+    const hill = new THREE.Mesh(
+        new THREE.ConeGeometry(size * 0.7, size * 1.4, 8),
+        new THREE.MeshStandardMaterial({color: 0x378443})
+    );
+    hill.position.y = size * 0.4;
+    island.add(hill);
+
+    for (let i = 0; i < 3; i++) {
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.2, 2.1, 7),
+            new THREE.MeshStandardMaterial({color: 0x70401e})
+        );
+        trunk.position.set(
+            (Math.random() - 0.5) * size,
+            1,
+            (Math.random() - 0.5) * size
+        );
+        trunk.rotation.z = 0.2;
+        island.add(trunk);
+
+        const leaves = new THREE.Mesh(
+            new THREE.SphereGeometry(0.9, 8, 8),
+            new THREE.MeshStandardMaterial({color: 0x146b35})
+        );
+        leaves.scale.set(1.5, 0.5, 1.5);
+        leaves.position.copy(trunk.position);
+        leaves.position.y += 1.2;
+        island.add(leaves);
+    }
+
+    island.position.set(x, 0, z);
+    scene.add(island);
+}
+
+makeIsland(-16, -18, 6);
+makeIsland(20, -30, 8);
+makeIsland(30, 12, 5);
+makeIsland(-25, 28, 7);
+
+// ========================
+// 6. TREASURE CHESTS
+// ========================
+
+const treasures = [];
+
+function makeChest() {
+    const chest = new THREE.Group();
+
+    // Wooden chest
+    const wood = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1, 0.65, 0.8),
+        new THREE.MeshStandardMaterial({color: 0x81451f})
+    );
+    chest.add(wood);
+
+    // Gold bands
+    const goldMat = new THREE.MeshStandardMaterial({
+        color: 0xffc928,
+        metalness: 0.7,
+        roughness: 0.25
+    });
+
+    for (let x of [-0.35, 0.35]) {
+        const band = new THREE.Mesh(
+            new THREE.BoxGeometry(0.12, 0.68, 0.84),
+            goldMat
+        );
+        band.position.x = x;
+        chest.add(band);
+    }
+
+    // Golden lock
+    const lock = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.22, 0.08),
+        goldMat
+    );
+    lock.position.set(0, -0.02, 0.43);
+    chest.add(lock);
+
+    return chest;
+}
+
+function spawnTreasure() {
+    const chest = makeChest();
+    chest.position.set(
+        player.position.x + (Math.random() - 0.5) * 24,
+        -0.15,
+        player.position.z - 18 - Math.random() * 15
+    );
+    scene.add(chest);
+    treasures.push(chest);
+}
+
+// ========================
+// 7. ENEMY SHIPS
+// ========================
+
+const enemies = [];
+const cannonballs = [];
+
+function spawnEnemy() {
+    const enemy = makeShip(0x542c19, true);
+
+    enemy.position.set(
+        player.position.x + (Math.random() - 0.5) * 25,
+        0,
+        player.position.z - 30 - Math.random() * 25
+    );
+
+    scene.add(enemy);
+    enemies.push({
+        mesh: enemy,
+        health: 1,
+        speed: 0.035 + Math.random() * 0.025
+    });
+}
+
+// ========================
+// 8. GAME STATE
+// ========================
+
+let score = 0;
+let health = 3;
+let playing = false;
+let yaw = 0;
+let pitch = 0;
+let lastShot = 0;
+let lastSpawn = 0;
+let keys = {};
+
+const raycaster = new THREE.Raycaster();
+
+document.addEventListener("keydown", function(e) {
+    keys[e.code] = true;
+});
+
+document.addEventListener("keyup", function(e) {
+    keys[e.code] = false;
+});
+
+// Mouse look
+document.addEventListener("mousemove", function(e) {
+    if (!playing || document.pointerLockElement !== renderer.domElement) {
+        return;
+    }
+
+    yaw -= e.movementX * 0.002;
+    pitch -= e.movementY * 0.002;
+    pitch = Math.max(-0.9, Math.min(0.9, pitch));
+});
+
+// Click to fire
+renderer.domElement.addEventListener("click", function() {
+    if (!playing) return;
+
+    if (document.pointerLockElement !== renderer.domElement) {
+        renderer.domElement.requestPointerLock();
+        return;
+    }
+
+    fireCannon();
+});
+
+// ========================
+// 9. CANNONBALLS
+// ========================
+
+function fireCannon() {
+    const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 12, 12),
+        new THREE.MeshStandardMaterial({
+            color: 0x252525,
+            metalness: 0.5
+        })
+    );
+
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+
+    ball.position.copy(camera.position);
+    ball.position.add(direction.clone().multiplyScalar(2));
+
+    scene.add(ball);
+
+    cannonballs.push({
+        mesh: ball,
+        velocity: direction.multiplyScalar(0.7),
+        life: 100
+    });
+}
+
+// ========================
+// 10. START AND END GAME
+// ========================
+
+function startGame() {
+    score = 0;
+    health = 3;
+    playing = true;
+    yaw = 0;
+    pitch = 0;
+
+    for (const e of enemies) scene.remove(e.mesh);
+    for (const b of cannonballs) scene.remove(b.mesh);
+    for (const t of treasures) scene.remove(t);
+
+    enemies.length = 0;
+    cannonballs.length = 0;
+    treasures.length = 0;
+
+    player.position.set(0, 0, 4);
+    player.rotation.set(0, 0, 0);
+
+    updateHUD();
+
+    document.getElementById("panel").style.display = "none";
+    renderer.domElement.requestPointerLock();
+
+    for (let i = 0; i < 4; i++) spawnEnemy();
+    for (let i = 0; i < 5; i++) spawnTreasure();
+
+    lastSpawn = performance.now();
+}
+
+function endGame() {
+    playing = false;
+    document.exitPointerLock();
+
+    document.getElementById("message").textContent = "VOYAGE OVER!";
+    document.getElementById("description").textContent =
+        "Your final treasure score: " + score;
+
+    document.getElementById("start").textContent = "PLAY AGAIN";
+    document.getElementById("panel").style.display = "block";
+}
+
+function updateHUD() {
+    document.getElementById("score").textContent = score;
+    document.getElementById("health").textContent = health;
+}
+
+document.getElementById("start").addEventListener("click", startGame);
+
+// ========================
+// 11. MAIN GAME LOOP
+// ========================
+
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const now = performance.now();
+
+    if (playing) {
+        // Sail forward and steer
+        const forward = new THREE.Vector3(
+            -Math.sin(yaw), 0, -Math.cos(yaw)
+        );
+
+        if (keys["KeyW"]) {
+            player.position.addScaledVector(forward, 8 * dt);
+        }
+        if (keys["KeyS"]) {
+            player.position.addScaledVector(forward, -5 * dt);
+        }
+        if (keys["KeyA"]) {
+            yaw += 1.5 * dt;
+        }
+        if (keys["KeyD"]) {
+            yaw -= 1.5 * dt;
+        }
+
+        player.rotation.y = yaw;
+
+        // Camera follows the ship
+        camera.position.set(
+            player.position.x + Math.sin(yaw) * 7,
+            4.5,
+            player.position.z + Math.cos(yaw) * 7
+        );
+
+        camera.rotation.order = "YXZ";
+        camera.rotation.set(pitch, yaw, 0);
+
+        // Spawn new enemies periodically
+        if (now - lastSpawn > 5000) {
+            spawnEnemy();
+            spawnTreasure();
+            lastSpawn = now;
+        }
+
+        // Move enemy ships toward the player
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+
+            const toPlayer = new THREE.Vector3()
+                .subVectors(player.position, enemy.mesh.position);
+
+            const distance = toPlayer.length();
+
+            if (distance > 0.1) {
+                toPlayer.normalize();
+                enemy.mesh.position.addScaledVector(
+                    toPlayer, enemy.speed * 30 * dt
+                );
+            }
+
+            enemy.mesh.lookAt(
+                player.position.x, 0, player.position.z
+            );
+
+            if (distance < 3) {
+                scene.remove(enemy.mesh);
+                enemies.splice(i, 1);
+                health--;
+                updateHUD();
+
+                if (health <= 0) {
+                    endGame();
+                    break;
+                }
+            }
+        }
+
+        // Move cannonballs and hit enemy ships
+        for (let i = cannonballs.length - 1; i >= 0; i--) {
+            const ball = cannonballs[i];
+
+            ball.mesh.position.addScaledVector(ball.velocity, 60 * dt);
+            ball.life--;
+
+            let hit = false;
+
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                const enemy = enemies[j];
+
+                if (ball.mesh.position.distanceTo(enemy.mesh.position) < 2.5) {
+                    scene.remove(enemy.mesh);
+                    enemies.splice(j, 1);
+
+                    score += 10;
+                    updateHUD();
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (hit || ball.life <= 0) {
+                scene.remove(ball.mesh);
+                cannonballs.splice(i, 1);
+            }
+        }
+
+        // Collect nearby treasure chests
+        for (let i = treasures.length - 1; i >= 0; i--) {
+            const chest = treasures[i];
+            chest.rotation.y += dt;
+
+            if (chest.position.distanceTo(player.position) < 3) {
+                scene.remove(chest);
+                treasures.splice(i, 1);
+                score += 25;
+                updateHUD();
+            }
+        }
+    } else {
+        // Demo camera rotation before starting
+        camera.position.set(0, 7, 13);
+        camera.lookAt(0, 0, -8);
+        player.rotation.y = Math.sin(now * 0.0003) * 0.2;
+    }
+
+    renderer.render(scene, camera);
+}
+
+window.addEventListener("resize", function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
+</script>
+</body>
 </html>
